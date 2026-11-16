@@ -32,6 +32,7 @@
 
 - **2026-11-15** — Garth created Garthnesss/elfstorygonewild and briefed the full remix: EXTREME premise, hero title, adult female cast of 5, drivable monster trucks, Super Off Road game-within-a-game. REA-Results local mirror checked — no matching entry. Docs pack written. Prototype build started in parallel.
 - **2026-11-15 (later)** — Prototype landed: `docs/index.html` 38,395 bytes, identical copy delivered to Garth as `elfstorygonewild.html`; JS `node --check` PASS re-verified by Muse. Monster Jam + Super Off Road research folded into DESIGN_BIBLE.md (original arcade shop prices cited from arcade-museum.com).
+- **2026-11-15 (night)** — PUBLISHED to GitHub: first push attempt's approval card timed out unseen (verified not landed); retry approved by Garth and landed as commit `f3d6b5f7` on `main` (7 files: README, 4 canonical docs, DESIGN_BIBLE, docs/index.html) — remote read-back verified despite a 503 in the push response. GitHub Pages not yet enabled (Phase 4).
 
 ## Blocked on Garth
 
