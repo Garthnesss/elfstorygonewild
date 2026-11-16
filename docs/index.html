@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ELFSTORY GONE WILD: EXTREME EDITION</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#000;color:#B4FF00;font-family:Impact,Arial Black,Arial,sans-serif;overflow:hidden;touch-action:none}
+#gameCanvas{position:fixed;inset:0;width:100%;height:100%;display:block;background:#111}
+button{font-family:inherit;cursor:pointer}
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:20;padding:16px}
+#titleScreen{background:radial-gradient(circle at 50% 20%,#2a3300,#000 65%);background-color:#000}
+.logo{font-size:clamp(38px,9vw,92px);line-height:.85;color:#B4FF00;text-shadow:4px 4px 0 #ff1493,-3px -3px 0 #000,0 0 30px #B4FF00;letter-spacing:1px;transform:rotate(-2deg)}
+.logo span{color:#ff1493;text-shadow:4px 4px 0 #B4FF00}
+.sub{color:#fff;font-size:clamp(14px,3vw,24px);margin-top:10px;letter-spacing:2px}
+.heroName{color:#ffea00;background:#ff1493;padding:6px 14px;margin:14px;font-size:clamp(13px,2.5vw,20px);transform:rotate(1deg);border:3px solid #B4FF00}
+.bigBtn{background:#B4FF00;color:#000;border:4px solid #ff1493;padding:16px 28px;font-size:clamp(18px,4vw,28px);box-shadow:0 0 24px #B4FF00;margin:10px}
+.bigBtn:active{transform:scale(.96)}
+.controlsBox{background:rgba(0,0,0,.85);border:2px solid #B4FF00;padding:12px 16px;color:#fff;font-family:Arial,sans-serif;font-size:13px;line-height:1.6;max-width:560px;text-align:left}
+.drinkRow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px}
+.drink{padding:6px 10px;font-size:13px;border:2px solid #fff}
+#shopScreen{display:none;background:rgba(0,0,0,.96);overflow:auto;justify-content:flex-start;padding-top:18px}
+.shopCard{background:#111;border:3px solid #ff1493;padding:14px;margin:8px;width:min(680px,94vw);display:flex;justify-content:space-between;align-items:center;gap:10px;color:#fff;font-family:Arial,sans-serif}
+.shopCard b{color:#B4FF00;font-family:Impact;font-size:20px;letter-spacing:1px}
+.pips{color:#B4FF00;font-size:18px;letter-spacing:2px}
+.shopBtn{background:#B4FF00;border:2px solid #ff1493;padding:10px 14px;font-weight:900;min-width:110px}
+.shopBtn:disabled{opacity:.35}
+#dialogueBox{position:fixed;left:50%;transform:translateX(-50%);bottom:92px;width:min(720px,94vw);background:#000;border:3px solid #B4FF00;box-shadow:0 0 20px #ff1493;padding:14px;z-index:30;display:none;color:#fff;font-family:Arial,sans-serif}
+#dialogueBox h3{color:#ff1493;font-family:Impact;letter-spacing:1px;font-size:22px}
+#dialogueBox p{margin:8px 0;line-height:1.5;font-size:15px}
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:8px 10px;z-index:15;pointer-events:none;text-shadow:2px 2px 0 #000;font-size:clamp(12px,2.5vw,18px)}
+#hud .pill{background:rgba(0,0,0,.75);border:2px solid #B4FF00;padding:5px 9px}
+#toast{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:25;background:#ff1493;color:#fff;padding:8px 14px;border:2px solid #B4FF00;display:none;font-size:18px;text-align:center}
+#mobileControls{position:fixed;bottom:0;left:0;right:0;z-index:18;display:flex;justify-content:space-between;padding:10px;pointer-events:none}
+.pad{display:grid;grid-template-columns:52px 52px 52px;grid-template-rows:52px 52px;gap:4px;pointer-events:auto}
+.pad button,.actBtn{background:rgba(0,0,0,.7);color:#B4FF00;border:2px solid #B4FF00;font-size:20px;border-radius:10px;min-width:52px;min-height:52px}
+.actions{display:flex;flex-direction:column;gap:6px;pointer-events:auto;align-items:end}
+.actBtn{font-size:13px;padding:6px 10px;min-height:44px}
+#muteBtn{position:fixed;top:52px;right:10px;z-index:22;background:#000;color:#B4FF00;border:2px solid #B4FF00;padding:6px 10px}
+@media(min-width:900px){#mobileControls{opacity:.85}}
+</style></head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="hud"><div class="pill" id="hudLeft">💰 $0 &nbsp; ⚡ NITRO: 0</div><div class="pill" id="hudCenter">RADHAVEN - hella bussin'</div><div class="pill" id="hudRight">VOLTAGE DEW MODE</div></div>
+<div id="toast"></div>
+<button id="muteBtn">🔊 SOUND ON</button>
+
+<div id="titleScreen" class="overlay">
+<div class="logo">ELFSTORY<br><span>GONE WILD</span><br>EXTREME EDITION</div>
+<div class="sub">FULL SEND • NO CAP • STRAIGHT BUSSIN'</div>
+<div class="heroName">STARRING: Garth "Mega Ultra Super Huge Dick" Elfstrom</div>
+<div class="drinkRow"><div class="drink" style="background:#2eff00;color:#000">VOLTAGE DEW</div><div class="drink" style="background:#ff0033">CRIMSON BULL</div><div class="drink" style="background:#222;border-color:#B4FF00;color:#B4FF00">BEAST ENERGY</div></div>
+<button class="bigBtn" id="startBtn">🏁 FULL SEND - START 🏁</button>
+<button class="bigBtn" style="background:#ff1493;color:#fff" id="raceBtn">🚛 STRAIGHT TO RACE - YEET!</button>
+<div class="controlsBox"><b style="color:#B4FF00">HOW TO COOK:</b><br>
+🚶 WASD / Arrows / Touch Pad - Move &amp; Drive<br>
+💬 E - Talk to the crew &nbsp; | &nbsp; 🚛 T - Get in/out Monster Truck<br>
+⚡ SPACE / SHIFT - NITRO (in race &amp; truck) &nbsp; | &nbsp; ⏸️ ESC / P - Pause<br>
+🏟️ Drive into the ARENA GATE in Radhaven to RACE!<br>
+💥 Crush cars in your truck for +$50. Grab cans for +NITRO &amp; cash!<br>
+🏆 Win races, hit Vixen's Speed Shop, upgrade, FULL SEND again!</div>
+<p style="color:#888;font-family:Arial;font-size:12px;margin-top:10px">A hella extreme parody remix. All characters are adults. No cap, this game is bussin'.</p>
+</div>
+
+<div id="shopScreen" class="overlay">
+<h1 style="font-size:clamp(30px,7vw,56px);color:#ff1493;text-shadow:3px 3px 0 #B4FF00">VIXEN'S SPEED SHOP</h1>
+<p style="color:#fff;font-family:Arial;margin:6px">Vixen Voltage: "Yo Garth, your truck is hella mid. Lemme fix that, no cap. Spend that cash, make it BUSSIN'!"</p>
+<div id="shopCash" style="font-size:22px;margin:8px">💰 $0</div>
+<div id="shopItems" style="width:100%;display:flex;flex-direction:column;align-items:center"></div>
+<button class="bigBtn" id="nextRaceBtn">🏁 FULL SEND - NEXT RACE</button>
+<button class="bigBtn" style="background:#ff1493;color:#fff" id="backTownBtn">🏘️ BACK TO RADHAVEN</button>
+</div>
+
+<div id="dialogueBox"><h3 id="dlgName">NPC</h3><p id="dlgText"></p><button class="shopBtn" id="dlgNext">NEXT ➡️</button> <button class="shopBtn" style="background:#ff1493;color:#fff" id="dlgClose">CLOSE (E)</button></div>
+
+<div id="mobileControls">
+<div class="pad">
+<div></div><button data-dir="up">⬆️</button><div></div>
+<button data-dir="left">⬅️</button><button data-dir="down">⬇️</button><button data-dir="right">➡️</button>
+</div>
+<div class="actions">
+<button class="actBtn" id="btnTalk">💬 TALK (E)</button>
+<button class="actBtn" id="btnTruck">🚛 TRUCK (T)</button>
+<button class="actBtn" id="btnNitro">⚡ NITRO</button>
+</div>
+</div>
+<script>
+"use strict";
+const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){DPR=Math.min(window.devicePixelRatio||1,2);W=window.innerWidth;H=window.innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0);}
+window.addEventListener('resize',resize);resize();
+
+// ===== SAVE / STATE =====
+let S={mode:'title',paused:false,cash:350,nitro:5,raceNum:1,shake:0,time:0,
+upgrades:{tires:0,shocks:0,accel:0,topSpeed:0},
+player:{x:400,y:500,angle:0,speed:0,inTruck:false,face:1},
+truck:{x:520,y:480,angle:-Math.PI/2,speed:0,bounce:0},
+cam:{x:0,y:0},keys:{},touchDir:{up:false,down:false,left:false,right:false},nitroHeld:false};
+try{const sv=JSON.parse(localStorage.getItem('egw_save')||'null');if(sv){S.cash=sv.cash??S.cash;S.nitro=sv.nitro??S.nitro;S.upgrades=sv.upgrades||S.upgrades;S.raceNum=sv.raceNum||1;}}catch(e){}
+function save(){try{localStorage.setItem('egw_save',JSON.stringify({cash:S.cash,nitro:S.nitro,upgrades:S.upgrades,raceNum:S.raceNum}));}catch(e){}}
+function truckStats(){return{topSpeed:7.2+S.upgrades.topSpeed*0.9,accel:0.28+S.upgrades.accel*0.07,grip:0.82+S.upgrades.tires*0.06,bounceResist:S.upgrades.shocks*0.14};}
+
+// ===== AUDIO =====
+let AC=null,muted=false;
+function audio(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+function blip(f,d,type,g){if(muted||!audio())return;try{const o=AC.createOscillator(),gn=AC.createGain();o.type=type||'square';o.frequency.value=f;gn.gain.value=g||0.06;gn.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+(d||0.12));o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+(d||0.12));}catch(e){}}
+function engineBlip(){blip(70+Math.abs(S.truck.speed)*18,0.08,'sawtooth',0.03);}
+document.getElementById('muteBtn').onclick=()=>{muted=!muted;document.getElementById('muteBtn').textContent=muted?'🔇 MUTED':'🔊 SOUND ON';};
+function toast(msg,ms){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',ms||2200);}
+function addShake(n){S.shake=Math.min(18,S.shake+n);}
+
+// ===== PARTICLES =====
+let particles=[];
+function burst(x,y,col,n,spd){for(let i=0;i<(n||14);i++){const a=Math.random()*Math.PI*2,s=(Math.random()*(spd||3)+1);particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,life:1,col,size:2+Math.random()*4});}}
+function updateParticles(dt){particles=particles.filter(p=>p.life>0);particles.forEach(p=>{p.x+=p.vx*dt*60*0.016*60;p.y+=p.vy;p.vy+=0.08;p.life-=0.03*dt*60;});}
+function drawParticles(c,ox,oy){particles.forEach(p=>{c.globalAlpha=Math.max(0,p.life);c.fillStyle=p.col;c.fillRect(p.x-(ox||0)-p.size/2,p.y-(oy||0)-p.size/2,p.size,p.size);});c.globalAlpha=1;}
+
+// ===== INPUT =====
+window.addEventListener('keydown',e=>{S.keys[e.key.toLowerCase()]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase()))e.preventDefault();
+if(e.key==='Escape'||e.key.toLowerCase()==='p'){if(S.mode==='overworld'||S.mode==='race')S.paused=!S.paused;}
+if(e.key.toLowerCase()==='e'){if(S.mode==='overworld')interactNPC();}
+if(e.key.toLowerCase()==='t'){if(S.mode==='overworld')toggleTruck();}
+if(e.key===' '||e.key==='Shift')S.nitroHeld=true;});
+window.addEventListener('keyup',e=>{S.keys[e.key.toLowerCase()]=false;if(e.key===' '||e.key==='Shift')S.nitroHeld=false;});
+function inputVec(){let x=0,y=0;if(S.keys['a']||S.keys['arrowleft']||S.touchDir.left)x-=1;if(S.keys['d']||S.keys['arrowright']||S.touchDir.right)x+=1;if(S.keys['w']||S.keys['arrowup']||S.touchDir.up)y-=1;if(S.keys['s']||S.keys['arrowdown']||S.touchDir.down)y+=1;return{x,y};}
+document.querySelectorAll('[data-dir]').forEach(b=>{const d=b.dataset.dir;const on=e=>{e.preventDefault();S.touchDir[d]=true;audio();};const off=e=>{e.preventDefault();S.touchDir[d]=false;};b.addEventListener('touchstart',on,{passive:false});b.addEventListener('touchend',off);b.addEventListener('mousedown',on);b.addEventListener('mouseup',off);b.addEventListener('mouseleave',off);});
+document.getElementById('btnTalk').onclick=()=>{if(S.mode==='overworld')interactNPC();};
+document.getElementById('btnTruck').onclick=()=>{if(S.mode==='overworld')toggleTruck();};
+const nb=document.getElementById('btnNitro');nb.addEventListener('touchstart',e=>{e.preventDefault();S.nitroHeld=true;});nb.addEventListener('touchend',()=>S.nitroHeld=false);nb.addEventListener('mousedown',()=>S.nitroHeld=true);nb.addEventListener('mouseup',()=>S.nitroHeld=false);
+canvas.addEventListener('touchstart',()=>audio(),{passive:true});
+
+// ===== NPCS & OVERWORLD DATA =====
+const NPCS=[
+{name:"Roxy Rampage",title:"Freestyle Queen Driver",x:300,y:320,body:"#ff1493",hair:"#B4FF00",skin:"#f2c49b",lines:["Yo yo yo! Roxy Rampage in the house! I just yeeted my truck over SIX cars, no cap!","Garth, you hella need to try freestyle. Full send off the ramp, backflip, crowd goes STRAIGHT BUSSIN'!","My truck DEWZILLA runs on VOLTAGE DEW and pure chaos. She don't lose, periodt!"]},
+{name:"Vixen Voltage",title:"Mechanic - Speed Shop",x:760,y:300,body:"#111",hair:"#ff1493",skin:"#8d5524",lines:["Well well, Garth Mega Ultra... I heard about you. I'm Vixen Voltage, I make trucks go BRRRR.","Bring me cash from races and I'll upgrade your tires, shocks, accel, top speed. Hella worth it, trust.","CRIMSON BULL in the tank, wrench in my hand - that's my whole personality and it's BUSSIN'."]},
+{name:"Cherry Bomb",title:"Arena Announcer",x:1050,y:520,body:"#ffea00",hair:"#ff0033",skin:"#ffe0bd",lines:["HELLO RADHAVEN! I'm Cherry Bomb and this crowd is HELLA HYPED!","Tonight Garth either wins the cup or yeets himself into the mud! Place your bets, besties!","MONSTER TRUCKS! MUD! NITRO! That's not a show, that's a lifestyle, straight bussin'!"]},
+{name:"Dixie Dewdrop",title:"Pit Party Host",x:420,y:760,body:"#00cfff",hair:"#ffea00",skin:"#f2c49b",lines:["Hey sugar! Dixie Dewdrop, host of the Pit Party! We got BEAST ENERGY on ice and vibes on MAX!","After the race we dance on crushed cars, hella rad. You better win so you can be king of the pit!","Honey, your truck ain't just a truck, it's a statement. Make it LOUD."]},
+{name:"Mama Max",title:"Undisputed Champion",x:900,y:780,body:"#7b00ff",hair:"#fff",skin:"#5c3a21",lines:["So you're the new blood. I'm Mama Max. 47 wins. Zero losses. Hella legend.","Kid, racing ain't about speed, it's about FULL SEND energy. Hesitate and you're mud.","Beat me in the arena and I'll respect you. Until then? You're just another snack. No cap."]}
+];
+let cars=[],cans=[];
+function resetOverworldProps(){
+cars=[];const carCols=["#ff0033","#00cfff","#ffea00","#aaa","#ff7a00","#7b00ff"];
+for(let i=0;i<14;i++){cars.push({x:180+Math.random()*1100,y:180+Math.random()*750,w:52,h:28,angle:Math.random()*Math.PI,col:carCols[i%carCols.length],crushed:false});}
+cans=[];for(let i=0;i<12;i++){cans.push({x:150+Math.random()*1200,y:150+Math.random()*800,taken:false,kind:["VOLTAGE DEW","CRIMSON BULL","BEAST ENERGY"][i%3]});}
+}
+resetOverworldProps();
+const WORLD={w:1500,h:1050};
+const ARENA={x:1180,y:120,w:220,h:130};
+let dlgIdx=0,dlgNPC=null;
+function showDialogue(npc){dlgNPC=npc;dlgIdx=0;document.getElementById('dialogueBox').style.display='block';document.getElementById('dlgName').textContent=npc.name+" — "+npc.title;document.getElementById('dlgText').textContent=npc.lines[0];blip(660,0.1,'square',0.05);}
+function hideDialogue(){document.getElementById('dialogueBox').style.display='none';dlgNPC=null;}
+document.getElementById('dlgNext').onclick=()=>{if(!dlgNPC)return;dlgIdx=(dlgIdx+1)%dlgNPC.lines.length;document.getElementById('dlgText').textContent=dlgNPC.lines[dlgIdx];blip(520,0.08);};
+document.getElementById('dlgClose').onclick=hideDialogue;
+function nearestNPC(){let best=null,bd=90;NPCS.forEach(n=>{const d=Math.hypot(S.player.x-n.x,S.player.y-n.y);if(d<bd){bd=d;best=n;}});return best;}
+function interactNPC(){if(dlgNPC){hideDialogue();return;}const n=nearestNPC();if(n)showDialogue(n);else toast("Get closer to someone to talk! Hella easy, no cap 💬");}
+function toggleTruck(){
+ if(!S.player.inTruck){const d=Math.hypot(S.player.x-S.truck.x,S.player.y-S.truck.y);if(d<80){S.player.inTruck=true;toast("🚛 YOU'RE IN THE MONSTER TRUCK! FULL SEND!");blip(120,0.3,'sawtooth',0.08);burst(S.truck.x,S.truck.y,"#B4FF00",18,4);}else toast("Get hella close to your truck first! 🚛");}
+ else{S.player.inTruck=false;S.player.x=S.truck.x+50;S.player.y=S.truck.y+20;S.truck.speed=0;toast("Parked it. Back on foot, king 👑");}
+}
+
+// ===== DRAW HELPERS =====
+function drawFemale(c,x,y,npc,bob){
+ const b=Math.sin(S.time*3+x)* (bob||1.5);
+ c.save();c.translate(x,y+b*0.3);
+ // shadow
+ c.fillStyle="rgba(0,0,0,.35)";c.beginPath();c.ellipse(0,26,16,6,0,0,7);c.fill();
+ // legs
+ c.fillStyle="#111";c.fillRect(-10,10,7,16);c.fillRect(3,10,7,16);
+ c.fillStyle="#ff1493";c.fillRect(-11,24,9,4);c.fillRect(2,24,9,4);
+ // body - exaggerated stylized adult proportions, fully clothed top/shorts style
+ c.fillStyle=npc.body;c.beginPath();c.ellipse(0,-2,13,14,0,0,7);c.fill();
+ c.fillStyle=npc.body;c.beginPath();c.ellipse(0,-10,16,10,0,0,7);c.fill(); // bust silhouette (clothed)
+ c.strokeStyle=npc.skin;c.lineWidth=5;c.beginPath();c.moveTo(-14,-6);c.lineTo(-19,6+b);c.moveTo(14,-6);c.lineTo(19,6-b);c.stroke();
+ // head
+ c.fillStyle=npc.skin;c.beginPath();c.arc(0,-26,11,0,7);c.fill();
+ // hair
+ c.fillStyle=npc.hair;c.beginPath();c.arc(0,-29,12,Math.PI,0);c.fill();c.fillRect(-12,-29,5,22);c.fillRect(7,-29,5,18);
+ c.fillStyle="#000";c.fillRect(-5,-27,2,2);c.fillRect(3,-27,2,2);
+ c.fillStyle="#ff1493";c.fillRect(-3,-21,6,2);
+ c.restore();
+ // nameplate
+ c.fillStyle="rgba(0,0,0,.8)";const w=c.measureText(npc.name).width+16;c.fillRect(x-w/2,y-58,w,18);
+ c.strokeStyle="#B4FF00";c.strokeRect(x-w/2,y-58,w,18);
+ c.fillStyle="#B4FF00";c.font="bold 11px Arial";c.textAlign="center";c.fillText(npc.name,x,y-45);
+ c.fillStyle="#ff1493";c.font="9px Arial";c.fillText("◆ "+npc.title+" ◆",x,y-62+72);
+}
+function drawHero(c,x,y,inTruck){
+ if(inTruck)return;
+ c.save();c.translate(x,y);
+ c.fillStyle="rgba(0,0,0,.35)";c.beginPath();c.ellipse(0,24,14,5,0,0,7);c.fill();
+ c.fillStyle="#222";c.fillRect(-9,8,7,16);c.fillRect(2,8,7,16);
+ c.fillStyle="#B4FF00";c.fillRect(-10,22,9,4);c.fillRect(1,22,9,4);
+ c.fillStyle="#B4FF00";c.fillRect(-13,-12,26,22);
+ c.fillStyle="#000";c.font="bold 8px Arial";c.textAlign="center";c.fillText("RAD",0,2);
+ c.strokeStyle="#f2c49b";c.lineWidth=5;c.beginPath();c.moveTo(-13,-6);c.lineTo(-18,6);c.moveTo(13,-6);c.lineTo(18,6);c.stroke();
+ c.fillStyle="#f2c49b";c.beginPath();c.arc(0,-22,11,0,7);c.fill();
+ c.fillStyle="#3b2314";c.fillRect(-11,-33,22,7);
+ c.fillStyle="#000";c.fillRect(-6,-23,3,3);c.fillRect(3,-23,3,3);
+ c.restore();
+ c.fillStyle="#fff";c.font="bold 10px Arial";c.textAlign="center";c.fillText('Garth "Mega Ultra..." Elfstrom',x,y-42);
+}
+function drawMonsterTruck(c,x,y,angle,col,scale,bounceY){
+ const s=scale||1;c.save();c.translate(x,y+(bounceY||0));c.rotate(angle);
+ c.fillStyle="rgba(0,0,0,.4)";c.beginPath();c.ellipse(0,6,34*s,20*s,0,0,7);c.fill();
+ // huge wheels
+ c.fillStyle="#111";[[-24,-18],[24,-18],[-24,18],[24,18]].forEach(w=>{c.beginPath();c.arc(w[0]*s,w[1]*s,13*s,0,7);c.fill();c.fillStyle="#888";c.beginPath();c.arc(w[0]*s,w[1]*s,5*s,0,7);c.fill();c.fillStyle="#111";});
+ // body
+ c.fillStyle=col;c.fillRect(-30*s,-14*s,60*s,28*s);
+ c.fillStyle="#000";c.fillRect(-10*s,-10*s,26*s,20*s);
+ c.fillStyle="#B4FF00";c.font=`bold ${11*s}px Impact`;c.textAlign="center";c.fillText("WILD",2*s,4*s);
+ c.fillStyle="#ff1493";c.fillRect(-30*s,-14*s,60*s,4*s);
+ c.restore();
+}
+function drawCar(c,car,ox,oy){
+ const x=car.x-ox,y=car.y-oy;if(car.crushed){c.fillStyle="#333";c.fillRect(x-26,y-8,52,16);c.fillStyle="#666";c.fillRect(x-18,y-5,36,10);c.fillStyle="#B4FF00";c.font="9px Arial";c.textAlign="center";c.fillText("CRUSHED",x,y+3);return;}
+ c.save();c.translate(x,y);c.rotate(car.angle);c.fillStyle=car.col;c.fillRect(-26,-14,52,28);c.fillStyle="#bfefff";c.fillRect(-6,-10,18,20);c.fillStyle="#111";c.fillRect(-24,-16,10,4);c.fillRect(14,-16,10,4);c.fillRect(-24,12,10,4);c.fillRect(14,12,10,4);c.restore();
+}
+
+// ===== OVERWORLD UPDATE =====
+function updateOverworld(dt){
+ const v=inputVec();const spd=S.player.inTruck?0:2.6;
+ if(!S.player.inTruck){
+   S.player.x+=v.x*spd*dt*60*0.9;S.player.y+=v.y*spd*dt*60*0.9;
+   if(v.x)S.player.face=v.x;
+   S.player.x=Math.max(30,Math.min(WORLD.w-30,S.player.x));S.player.y=Math.max(40,Math.min(WORLD.h-30,S.player.y));
+ } else {
+   // driving truck in overworld
+   const st=truckStats();
+   if(v.y<0)S.truck.speed+=st.accel*0.7*dt*60*0.06*10;
+   if(v.y>0)S.truck.speed-=0.18*dt*60*0.06*10;
+   if(v.x<0)S.truck.angle-=0.045*(S.truck.speed>=0?1:-1)*(Math.abs(S.truck.speed)>0.2?1:0);
+   if(v.x>0)S.truck.angle+=0.045*(S.truck.speed>=0?1:-1)*(Math.abs(S.truck.speed)>0.2?1:0);
+   if(S.nitroHeld&&S.nitro>0&&Math.abs(S.truck.speed)>1){S.truck.speed*=1.02;burst(S.truck.x-Math.cos(S.truck.angle)*30,S.truck.y-Math.sin(S.truck.angle)*30,"#ff7a00",2,2);}
+   S.truck.speed*=0.96;S.truck.speed=Math.max(-3,Math.min(st.topSpeed*0.85,S.truck.speed));
+   S.truck.x+=Math.cos(S.truck.angle)*S.truck.speed;S.truck.y+=Math.sin(S.truck.angle)*S.truck.speed;
+   S.truck.x=Math.max(40,Math.min(WORLD.w-40,S.truck.x));S.truck.y=Math.max(40,Math.min(WORLD.h-40,S.truck.y));
+   S.truck.bounce=Math.abs(S.truck.speed)>2?Math.sin(S.time*18)*3:0;
+   S.player.x=S.truck.x;S.player.y=S.truck.y;
+   if(Math.abs(S.truck.speed)>0.5&&Math.random()<0.2)engineBlip();
+   // crush cars
+   cars.forEach(car=>{if(!car.crushed&&Math.hypot(S.truck.x-car.x,S.truck.y-car.y)<48){car.crushed=true;S.cash+=50;addShake(10);burst(car.x,car.y,"#ffea00",22,5);burst(car.x,car.y,"#ff1493",12,3);toast("💥 CRUSHED! straight bussin' +$50");blip(90,0.35,'sawtooth',0.12);save();}});
+ }
+ // cans pickup (on foot or truck)
+ cans.forEach(can=>{if(!can.taken&&Math.hypot(S.player.x-can.x,S.player.y-can.y)<34){can.taken=true;S.nitro=Math.min(99,S.nitro+1);S.cash+=15;toast("🥤 "+can.kind+"! +1 NITRO +$15 hella rad!");blip(880,0.15);burst(can.x,can.y,"#B4FF00",14,3);save();}});
+ // arena gate
+ const inGate=S.player.x>ARENA.x&&S.player.x<ARENA.x+ARENA.w&&S.player.y>ARENA.y&&S.player.y<ARENA.y+ARENA.h;
+ if(inGate){startRace();return;}
+ // camera
+ const tx=(S.player.inTruck?S.truck.x:S.player.x)-W/2,ty=(S.player.inTruck?S.truck.y:S.player.y)-H/2;
+ S.cam.x=Math.max(0,Math.min(WORLD.w-W,tx));S.cam.y=Math.max(0,Math.min(WORLD.h-H,ty));if(WORLD.w<W)S.cam.x=-(W-WORLD.w)/2;if(WORLD.h<H)S.cam.y=-(H-WORLD.h)/2;
+}
+function renderOverworld(){
+ const ox=S.cam.x,oy=S.cam.y;
+ ctx.fillStyle="#1a2e12";ctx.fillRect(0,0,W,H);
+ // grass checker
+ ctx.fillStyle="#223d16";for(let gx=0;gx<WORLD.w;gx+=80)for(let gy=0;gy<WORLD.h;gy+=80){if(((gx+gy)/80)%2===0)ctx.fillRect(gx-ox,gy-oy,80,80);}
+ // roads
+ ctx.fillStyle="#333";ctx.fillRect(0-ox,430-oy,WORLD.w,110);ctx.fillRect(620-ox,0-oy,110,WORLD.h);
+ ctx.fillStyle="#ffea00";for(let i=0;i<WORLD.w;i+=50)ctx.fillRect(i-ox,482-oy,28,4);for(let i=0;i<WORLD.h;i+=50)ctx.fillRect(672-ox,i-oy,4,28);
+ // buildings / signs
+ const signs=[["RADHAVEN",80,90,"#B4FF00"],["VOLTAGE DEW HQ",820,90,"#2eff00"],["BEAST ENERGY ARENA",1150,280,"#ff1493"],["PIT PARTY 🌴",120,880,"#00cfff"]];
+ signs.forEach(s=>{ctx.fillStyle="#111";ctx.fillRect(s[1]-ox,s[2]-oy,220,64);ctx.strokeStyle=s[3];ctx.lineWidth=3;ctx.strokeRect(s[1]-ox,s[2]-oy,220,64);ctx.fillStyle=s[3];ctx.font="bold 16px Impact";ctx.textAlign="center";ctx.fillText(s[0],s[1]-ox+110,s[2]-oy+38);});
+ // arena gate
+ ctx.fillStyle="#ff1493";ctx.fillRect(ARENA.x-ox,ARENA.y-oy,ARENA.w,ARENA.h);
+ ctx.fillStyle="#B4FF00";ctx.font="bold 20px Impact";ctx.textAlign="center";ctx.fillText("🏟️ ARENA GATE",ARENA.x-ox+ARENA.w/2,ARENA.y-oy+48);ctx.fillStyle="#fff";ctx.font="bold 13px Arial";ctx.fillText("DRIVE / WALK IN TO RACE!",ARENA.x-ox+ARENA.w/2,ARENA.y-oy+74);ctx.strokeStyle="#B4FF00";ctx.lineWidth=4;ctx.strokeRect(ARENA.x-ox,ARENA.y-oy,ARENA.w,ARENA.h);
+ // cans
+ cans.forEach(can=>{if(can.taken)return;const x=can.x-ox,y=can.y-oy+Math.sin(S.time*4+can.x)*3;ctx.fillStyle=can.kind.includes("VOLTAGE")?"#2eff00":can.kind.includes("CRIMSON")?"#ff0033":"#222";ctx.fillRect(x-7,y-11,14,22);ctx.fillStyle="#fff";ctx.font="bold 7px Arial";ctx.textAlign="center";ctx.fillText("⚡",x,y+2);});
+ cars.forEach(car=>drawCar(ctx,car,ox,oy));
+ // truck parked / driven
+ drawMonsterTruck(ctx,S.truck.x-ox,S.truck.y-oy,S.truck.angle+Math.PI/2,"#B4FF00",1,S.truck.bounce);
+ if(!S.player.inTruck){ctx.fillStyle="#fff";ctx.font="11px Arial";ctx.textAlign="center";ctx.fillText("🚛 YOUR MONSTER TRUCK [T]",S.truck.x-ox,S.truck.y-oy-42);}
+ NPCS.forEach(n=>drawFemale(ctx,n.x-ox,n.y-oy,n,1.5));
+ drawHero(ctx,S.player.x-ox,S.player.y-oy,S.player.inTruck);
+ // prompt
+ const nn=nearestNPC();if(nn&&!S.player.inTruck){ctx.fillStyle="rgba(0,0,0,.85)";ctx.fillRect(S.player.x-ox-90,S.player.y-oy+34,180,22);ctx.fillStyle="#B4FF00";ctx.font="bold 12px Arial";ctx.textAlign="center";ctx.fillText("Press E to talk to "+nn.name,S.player.x-ox,S.player.y-oy+49);}
+ drawParticles(ctx,ox,oy);
+}
+
+// ===== RACE MODE =====
+let R=null;
+function trackWaypoints(){
+ // oval waypoints scaled to screen
+ const cx=W/2,cy=H/2+20,rx=Math.min(W*0.36,520),ry=Math.min(H*0.30,260);
+ let pts=[];for(let i=0;i<16;i++){const a=(i/16)*Math.PI*2;pts.push({x:cx+Math.cos(a)*rx,y:cy+Math.sin(a)*ry});}
+ return pts;
+}
+function startRace(){
+ S.mode='race';hideDialogue();document.getElementById('titleScreen').style.display='none';document.getElementById('shopScreen').style.display='none';
+ const wps=trackWaypoints();
+ const diff=1+(S.raceNum-1)*0.12;
+ const mk=(i,col,name,isP)=>{const p=wps[0];const off=(i%2)*44-22,off2=Math.floor(i/2)*52;return{x:p.x+off,y:p.y+off2,angle:0,speed:0,col,name,isPlayer:!!isP,wp:1,lap:1,finished:false,finishTime:0,air:0,nitroTimer:0,progress:0};}
+ R={wps,trucks:[mk(0,"#B4FF00","YOU - Garth",true),mk(1,"#ff1493","Roxy Rampage",false),mk(2,"#00cfff","Vixen Voltage",false),mk(3,"#ffea00","Mama Max",false)],countdown:3,timer:0,finished:false,cashBags:[],muds:[{x:W*0.28,y:H*0.32,r:46},{x:W*0.72,y:H*0.68,r:52},{x:W*0.5,y:H*0.22,r:36}],ramps:[{x:W*0.22,y:H*0.55,r:26},{x:W*0.78,y:H*0.42,r:26}],diff,playerPos:4};
+ for(let i=0;i<5;i++)spawnCashBag();
+ toast("🏁 RACE #"+S.raceNum+" - 4 LAPS! FULL SEND! 🏁",2500);blip(440,0.2);setTimeout(()=>blip(880,0.3),300);
+}
+function spawnCashBag(){if(!R)return;const w=R.wps[Math.floor(Math.random()*R.wps.length)];R.cashBags.push({x:w.x+(Math.random()*50-25),y:w.y+(Math.random()*50-25),taken:false});}
+function raceTruckUpdate(t,dt,isAI){
+ const st=isAI?{topSpeed:6.4*R.diff,accel:0.24,grip:0.88,bounceResist:0.2}:truckStats();
+ const target=R.wps[t.wp];const dx=target.x-t.x,dy=target.y-t.y;const dist=Math.hypot(dx,dy);
+ const desired=Math.atan2(dy,dx);
+ let da=desired-t.angle;while(da>Math.PI)da-=Math.PI*2;while(da<-Math.PI)da+=Math.PI*2;
+ // rubber banding for AI
+ let speedCap=st.topSpeed;
+ if(isAI){const pp=R.trucks[0];const progDiff=pp.progress-t.progress;speedCap+=Math.max(-0.9,Math.min(1.4,progDiff*0.015));}
+ if(!isAI){
+   const v=inputVec();
+   if(v.y<0)t.speed+=st.accel*dt*55*0.12;
+   if(v.y>0)t.speed-=0.2*dt*55*0.12;
+   if(v.x<0)t.angle-=0.055*st.grip*(t.speed>=0?1:-1);
+   if(v.x>0)t.angle+=0.055*st.grip*(t.speed>=0?1:-1);
+   // also allow direct angle steering toward input on touch: if pressing left/right already handled
+   if(S.nitroHeld&&S.nitro>0&&t.speed>1){if(!t._nitroTick||S.time-t._nitroTick>0.45){S.nitro--;t._nitroTick=S.time;t.nitroTimer=0.6;burst(t.x-Math.cos(t.angle)*24,t.y-Math.sin(t.angle)*24,"#ff7a00",10,3);blip(200,0.15,'sawtooth',0.07);} }
+ } else {
+   t.angle+=Math.max(-0.07,Math.min(0.07,da))* (0.7+st.grip*0.5);
+   if(Math.abs(da)<1.2)t.speed+=st.accel*dt*55*0.12;else t.speed*=0.98;
+   if(Math.random()<0.002&&t.nitroTimer<=0)t.nitroTimer=0.5;
+ }
+ if(t.nitroTimer>0){t.nitroTimer-=dt;speedCap+=2.6;t.speed+=0.25;}
+ // mud & ramps
+ let inMud=false;R.muds.forEach(m=>{if(Math.hypot(t.x-m.x,t.y-m.y)<m.r)inMud=true;});
+ if(inMud&&t.air<=0)speedCap*= (isAI?0.55:Math.max(0.35,0.62 - st.bounceResist*0.3));
+ R.ramps.forEach(r=>{if(Math.hypot(t.x-r.x,t.y-r.y)<r.r&&t.air<=0&&Math.abs(t.speed)>2){t.air=0.55-(isAI?0.1:st.bounceResist*0.3);if(!isAI){toast("🛫 HELLA AIR! YEET!");blip(700,0.2);} }});
+ if(t.air>0)t.air-=dt;
+ t.speed*=0.965;t.speed=Math.max(-2.5,Math.min(speedCap,t.speed));
+ t.x+=Math.cos(t.angle)*t.speed*dt*55*0.9;t.y+=Math.sin(t.angle)*t.speed*dt*55*0.9;
+ t.x=Math.max(30,Math.min(W-30,t.x));t.y=Math.max(70,Math.min(H-30,t.y));
+ if(dist<52){t.wp=(t.wp+1)%R.wps.length;t.progress++;if(t.wp===1){t.lap++;if(t.isPlayer)blip(990,0.2);if(t.lap>4&&!t.finished){t.finished=true;t.finishTime=R.timer;}}}
+ // cash bags for player
+ if(t.isPlayer){R.cashBags.forEach(b=>{if(!b.taken&&Math.hypot(t.x-b.x,t.y-b.y)<30){b.taken=true;S.cash+=75;toast("💰 CASH BAG +$75 straight bussin'!");blip(1050,0.12);burst(b.x,b.y,"#ffea00",12,3);setTimeout(spawnCashBag,2500);save();}});}
+}
+function updateRace(dt){
+ if(!R)return;R.timer+=dt;
+ if(R.countdown>0){R.countdown-=dt;if(R.countdown<=0)toast("GOOOO! FULL SEND!!! 🚀");return;}
+ R.trucks.forEach(t=>{if(!t.finished)raceTruckUpdate(t,dt,!t.isPlayer);});
+ // collisions between trucks (simple push)
+ for(let i=0;i<R.trucks.length;i++)for(let j=i+1;j<R.trucks.length;j++){const a=R.trucks[i],b=R.trucks[j];const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<36&&d>0){const push=(36-d)/2,ux=(b.x-a.x)/d,uy=(b.y-a.y)/d;a.x-=ux*push;a.y-=uy*push;b.x+=ux*push;b.y+=uy*push;}}
+ // position calc: sort by progress desc then dist to next wp
+ const sorted=[...R.trucks].sort((a,b)=>{if(b.progress!==a.progress)return b.progress-a.progress;const da=Math.hypot(R.wps[a.wp].x-a.x,R.wps[a.wp].y-a.y),db=Math.hypot(R.wps[b.wp].x-b.x,R.wps[b.wp].y-b.y);return da-db;});
+ R.playerPos=sorted.findIndex(t=>t.isPlayer)+1;R.sorted=sorted;
+ const player=R.trucks[0];
+ if(player.finished&&!R.finished){R.finished=true;finishRace(R.playerPos);}
+ if(R.timer>150&&!R.finished){R.finished=true;finishRace(R.playerPos);}
+}
+function finishRace(pos){
+ const payouts=[1000,700,450,250];const pay=payouts[pos-1]||250;S.cash+=pay;S.raceNum++;save();
+ const msgs=["🏆 1ST PLACE! $"+pay+"! STRAIGHT BUSSIN' CHAMPION!","🥈 2ND! $"+pay+" hella close, no cap!","🥉 3RD! $"+pay+" - podium is podium, rad!","💥 4TH! $"+pay+" - yeet that loss, upgrade and revenge!"];
+ toast(msgs[pos-1],3500);burst(R.trucks[0].x,R.trucks[0].y,"#B4FF00",40,6);blip(880,0.4);setTimeout(()=>{openShop("Race finished P"+pos+"! +$"+pay);},1800);
+}
+function renderRace(){
+ if(!R)return;
+ ctx.fillStyle="#5c3d1e";ctx.fillRect(0,0,W,H);
+ ctx.fillStyle="#6e4a22";for(let i=0;i<80;i++)ctx.fillRect((i*97)%W,(i*61)%H,18,6);
+ // track as thick loop
+ ctx.strokeStyle="#8a5a2b";ctx.lineWidth=Math.min(92,W*0.11);ctx.lineJoin="round";ctx.beginPath();R.wps.forEach((p,i)=>{if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);});ctx.closePath();ctx.stroke();
+ ctx.strokeStyle="#d9a066";ctx.lineWidth=Math.min(78,W*0.095);ctx.beginPath();R.wps.forEach((p,i)=>{if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);});ctx.closePath();ctx.stroke();
+ ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.setLineDash([12,14]);ctx.beginPath();R.wps.forEach((p,i)=>{if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);});ctx.closePath();ctx.stroke();ctx.setLineDash([]);
+ // start line
+ const s=R.wps[0];ctx.fillStyle="#fff";ctx.fillRect(s.x-4,s.y-42,8,84);ctx.fillStyle="#000";for(let i=0;i<7;i++)if(i%2===0)ctx.fillRect(s.x-4,s.y-42+i*12,8,6);
+ // infield sign
+ ctx.fillStyle="#000";ctx.fillRect(W/2-150,H/2-36,300,72);ctx.strokeStyle="#B4FF00";ctx.strokeRect(W/2-150,H/2-36,300,72);ctx.fillStyle="#B4FF00";ctx.font="bold 18px Impact";ctx.textAlign="center";ctx.fillText("SUPER OFF-ROAD REMIX",W/2,H/2-6);ctx.fillStyle="#ff1493";ctx.font="13px Arial";ctx.fillText("VOLTAGE DEW • CRIMSON BULL • BEAST ENERGY",W/2,H/2+16);
+ // muds & ramps
+ R.muds.forEach(m=>{ctx.fillStyle="#3d240d";ctx.beginPath();ctx.arc(m.x,m.y,m.r,0,7);ctx.fill();ctx.fillStyle="#5a3515";ctx.beginPath();ctx.arc(m.x-8,m.y-6,m.r*0.5,0,7);ctx.fill();});
+ R.ramps.forEach(r=>{ctx.fillStyle="#ffea00";ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,7);ctx.fill();ctx.fillStyle="#000";ctx.font="bold 16px Arial";ctx.textAlign="center";ctx.fillText("▲",r.x,r.y+6);});
+ R.cashBags.forEach(b=>{if(b.taken)return;ctx.fillStyle="#0a0";ctx.fillRect(b.x-11,b.y-9,22,18);ctx.fillStyle="#ffea00";ctx.font="bold 12px Arial";ctx.textAlign="center";ctx.fillText("$",b.x,b.y+4);});
+ // trucks
+ R.trucks.forEach(t=>{const bounce=t.air>0?-14:Math.sin(S.time*16)* (Math.abs(t.speed)>1?2:0);drawMonsterTruck(ctx,t.x,t.y,t.angle+Math.PI/2,t.col,0.92,bounce);if(t.nitroTimer>0){ctx.fillStyle="#ff7a00";ctx.beginPath();ctx.arc(t.x-Math.cos(t.angle)*30,t.y-Math.sin(t.angle)*30,9+Math.random()*6,0,7);ctx.fill();}ctx.fillStyle="#fff";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.fillText(t.name,t.x,t.y-32);});
+ drawParticles(ctx,0,0);
+ // HUD race overlay
+ ctx.fillStyle="rgba(0,0,0,.82)";ctx.fillRect(10,H-64,340,52);ctx.strokeStyle="#B4FF00";ctx.strokeRect(10,H-64,340,52);
+ ctx.fillStyle="#B4FF00";ctx.font="bold 15px Arial";ctx.textAlign="left";
+ const p=R.trucks[0];ctx.fillText(`LAP ${Math.min(4,p.lap)}/4  POS ${R.playerPos}/4  SPEED ${Math.abs(Math.round(p.speed*14))} MPH`,18,H-42);
+ ctx.fillStyle="#ff1493";ctx.fillText(`⚡ NITRO x${S.nitro} (SPACE)  💰 $${S.cash}  RACE #${S.raceNum- (R.finished?1:0)}`,18,H-22);
+ if(R.sorted){ctx.fillStyle="rgba(0,0,0,.8)";ctx.fillRect(W-190,64,180,86);ctx.fillStyle="#fff";ctx.font="12px Arial";R.sorted.forEach((t,i)=>{ctx.fillStyle=t.isPlayer?"#B4FF00":"#fff";ctx.fillText(`${i+1}. ${t.name}  L${Math.min(4,t.lap)}`,W-180,84+i*18);});}
+ if(R.countdown>0){ctx.fillStyle="#B4FF00";ctx.font="bold 90px Impact";ctx.textAlign="center";ctx.fillText(Math.ceil(R.countdown),W/2,H/2-80);ctx.font="bold 22px Arial";ctx.fillText("GET READY... HELLA READY...",W/2,H/2-40);}
+}
+
+// ===== SHOP =====
+const SHOP=[
+{id:'nitro',name:'NITRO x1',desc:'One sweet nitro burst. Stack em up!',price:()=>100,max:()=>99,level:()=>S.nitro,buy:()=>{S.nitro=Math.min(99,S.nitro+1);}},
+{id:'tires',name:'TIRES Lv',desc:'Grip upgrade - turn like a bussin pro',price:()=>400,max:()=>5,level:()=>S.upgrades.tires,buy:()=>S.upgrades.tires++},
+{id:'shocks',name:'SHOCKS Lv',desc:'Bounce less, mud & ramps hurt less',price:()=>600,max:()=>5,level:()=>S.upgrades.shocks,buy:()=>S.upgrades.shocks++},
+{id:'accel',name:'ACCELERATION Lv',desc:'Yeet off the line HELLA fast',price:()=>800,max:()=>5,level:()=>S.upgrades.accel,buy:()=>S.upgrades.accel++},
+{id:'topSpeed',name:'TOP SPEED Lv',desc:'Maximum full-send velocity, no cap',price:()=>1000,max:()=>5,level:()=>S.upgrades.topSpeed,buy:()=>S.upgrades.topSpeed++},
+];
+let shopMsg="";
+function openShop(msg){S.mode='shop';shopMsg=msg||"";document.getElementById('shopScreen').style.display='flex';renderShop();}
+function renderShop(){
+ document.getElementById('shopCash').innerHTML="💰 $"+S.cash+" &nbsp; ⚡ NITRO x"+S.nitro+(shopMsg?("<br><span style='font-size:15px;color:#B4FF00'>"+shopMsg+"</span>"):"");
+ const wrap=document.getElementById('shopItems');wrap.innerHTML="";
+ SHOP.forEach(item=>{
+   const lvl=item.level(),max=item.max(),price=item.price();const maxed=lvl>=max;const afford=S.cash>=price;
+   const div=document.createElement('div');div.className='shopCard';
+   const pips=item.id==='nitro'?("x"+lvl):("●".repeat(lvl)+"○".repeat(max-lvl));
+   div.innerHTML=`<div><b>${item.name}</b> <span class="pips">${pips}</span><br><span>${item.desc}</span></div>`;
+   const btn=document.createElement('button');btn.className='shopBtn';btn.textContent=maxed?"MAXED OUT 🔥":"BUY $"+price;btn.disabled=maxed||!afford;
+   btn.onclick=()=>{if(S.cash<price||lvl>=max)return;S.cash-=price;item.buy();save();blip(950,0.12);toast("✅ "+item.name+" UPGRADED! straight bussin'!");renderShop();};
+   div.appendChild(btn);wrap.appendChild(div);
+ });
+}
+document.getElementById('nextRaceBtn').onclick=()=>{document.getElementById('shopScreen').style.display='none';startRace();};
+document.getElementById('backTownBtn').onclick=()=>{document.getElementById('shopScreen').style.display='none';S.mode='overworld';S.player.x=400;S.player.y=500;S.player.inTruck=false;S.truck.x=520;S.truck.y=480;if(cars.every(c=>c.crushed))resetOverworldProps();toast("Back in RADHAVEN 🏘️ hella cozy, hella rad");};
+
+// ===== TITLE / MODE SWITCHING =====
+function startGame(){audio();document.getElementById('titleScreen').style.display='none';document.getElementById('shopScreen').style.display='none';S.mode='overworld';toast("Welcome to RADHAVEN, Garth! Talk, crush, race - FULL SEND! 🔥",3200);blip(523,0.12);setTimeout(()=>blip(784,0.15),120);}
+document.getElementById('startBtn').onclick=startGame;
+document.getElementById('raceBtn').onclick=()=>{audio();startRace();};
+function switchMode(m){S.mode=m;if(m==='overworld'){document.getElementById('shopScreen').style.display='none';document.getElementById('titleScreen').style.display='none';}if(m==='race')startRace();if(m==='shop')openShop();if(m==='title'){document.getElementById('titleScreen').style.display='flex';}}
+window.switchMode=switchMode;window.startRace=startRace;window.openShop=openShop;
+
+// ===== HUD =====
+function updateHUD(){
+ document.getElementById('hudLeft').textContent="💰 $"+S.cash+"  ⚡ NITRO: "+S.nitro;
+ if(S.mode==='race'&&R)document.getElementById('hudCenter').textContent="🏁 RACE - LAP "+Math.min(4,R.trucks[0].lap)+"/4 - POS "+R.playerPos+"/4";
+ else if(S.mode==='shop')document.getElementById('hudCenter').textContent="🛠️ VIXEN'S SPEED SHOP";
+ else if(S.mode==='overworld')document.getElementById('hudCenter').textContent=S.player.inTruck?"🚛 MONSTER TRUCK MODE - CRUSH EVERYTHING":"RADHAVEN - hella bussin'";
+ document.getElementById('hudRight').textContent="TIRES "+S.upgrades.tires+" • SHOCKS "+S.upgrades.shocks+" • ACCEL "+S.upgrades.accel+" • SPEED "+S.upgrades.topSpeed;
+}
+
+// ===== MAIN LOOP =====
+let last=performance.now();
+function loop(now){
+ requestAnimationFrame(loop);
+ let dt=Math.min(0.05,(now-last)/1000);last=now;if(S.paused)dt=0;S.time+=dt;
+ ctx.save();
+ if(S.shake>0){ctx.translate((Math.random()-0.5)*S.shake,(Math.random()-0.5)*S.shake);S.shake*=0.88;if(S.shake<0.3)S.shake=0;}
+ if(S.mode==='title'){ // animated title bg
+   ctx.fillStyle="#0a0f00";ctx.fillRect(0,0,W,H);ctx.fillStyle="#B4FF00";
+   for(let i=0;i<30;i++){const x=(i*137+S.time*40)%W,y=(i*89)%H;ctx.globalAlpha=0.25;ctx.fillRect(x,y,4,18);}ctx.globalAlpha=1;
+   drawMonsterTruck(ctx,W/2, H-110+Math.sin(S.time*3)*6, -Math.PI/2+Math.sin(S.time)*0.08,"#B4FF00",1.6,0);
+   drawMonsterTruck(ctx,W/2-180,H-90, -Math.PI/2,"#ff1493",1.1,0);drawMonsterTruck(ctx,W/2+180,H-90,-Math.PI/2,"#00cfff",1.1,0);
+ }
+ else if(S.mode==='overworld'){if(dt>0)updateOverworld(dt);renderOverworld();}
+ else if(S.mode==='race'){if(dt>0)updateRace(dt);renderRace();}
+ else if(S.mode==='shop'){ctx.fillStyle="#111";ctx.fillRect(0,0,W,H);drawMonsterTruck(ctx,W/2,H/2,-Math.PI/2,"#B4FF00",2,Math.sin(S.time*2)*5);}
+ if(dt>0)updateParticles(dt);
+ if(S.paused){ctx.fillStyle="rgba(0,0,0,.7)";ctx.fillRect(0,0,W,H);ctx.fillStyle="#B4FF00";ctx.font="bold 48px Impact";ctx.textAlign="center";ctx.fillText("⏸️ PAUSED",W/2,H/2);ctx.font="18px Arial";ctx.fillStyle="#fff";ctx.fillText("Press ESC / P to resume - stay hella hydrated",W/2,H/2+36);}
+ ctx.restore();updateHUD();
+}
+requestAnimationFrame(loop);
+</script>
+</body></html>
